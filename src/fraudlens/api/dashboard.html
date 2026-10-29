@@ -1,0 +1,20 @@
+<!doctype html><html><head><meta charset="utf-8"><title>FraudLens analyst console</title>
+<style>body{font:14px system-ui;margin:2rem;max-width:960px}table{border-collapse:collapse;width:100%}
+td,th{border-bottom:1px solid #ddd;padding:6px;text-align:left;vertical-align:top}.high{color:#b00020;font-weight:600}
+button{margin-right:4px}textarea,input{font:inherit}</style></head><body>
+<h1>FraudLens analyst console</h1>
+<p>Human-in-the-loop triage. The model flags and explains; analysts decide. No autonomous blocking.</p>
+<details><summary>Score a demo transaction</summary>
+<textarea id="tx" rows="9" cols="70">{"step":3,"type":"TRANSFER","amount":250000,"nameOrig":"C100000001","oldbalanceOrg":250000,"newbalanceOrig":0,"nameDest":"C200000002","oldbalanceDest":0,"newbalanceDest":0,"message":"URGENT verify your password and OTP at http://x.example.com"}</textarea><br>
+<button onclick="send()">Score</button></details>
+<h2>Flagged alerts</h2><table id="t"><thead><tr><th>Account</th><th>Risk</th><th>Rationale</th><th>Phishing ctx</th><th>Feedback</th></tr></thead><tbody></tbody></table>
+<script>
+const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+async function load(){const r=await (await fetch('/alerts')).json();
+ document.querySelector('#t tbody').innerHTML=r.map(a=>`<tr><td>${esc(a.account_pseudonym)}</td>
+ <td class="${esc(a.risk_band)}">${esc(a.risk_band)} (${esc(a.risk_score)})</td><td>${esc(a.rationale)}<br><small>${esc(a.drivers.map(d=>d.feature).join(', '))} · ${esc(a.rationale_source)}</small></td>
+ <td>${a.phishing_context?'yes':'-'}</td><td>${esc(a.feedback)||['confirmed_fraud','false_positive','needs_review'].map(v=>`<button onclick="fb('${esc(a.alert_id)}','${v}')">${v}</button>`).join('')}</td></tr>`).join('')}
+async function send(){await fetch('/score',{method:'POST',headers:{'content-type':'application/json'},body:document.getElementById('tx').value});load()}
+async function fb(id,v){await fetch('/feedback',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({alert_id:id,verdict:v})});load()}
+load();
+</script></body></html>

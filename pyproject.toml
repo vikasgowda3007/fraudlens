@@ -1,0 +1,19 @@
+[project]
+name = "fraudlens"
+version = "0.1.0"
+description = "Explainable LLM-assisted detection of fraudulent real-time banking transactions (CSE 543 Group 6)"
+requires-python = ">=3.10"
+dependencies = [
+  "numpy", "pandas", "scikit-learn", "xgboost", "shap", "lime",
+  "fastapi", "uvicorn", "pydantic", "joblib", "httpx",
+]
+
+[project.optional-dependencies]
+dev = ["pytest"]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]
